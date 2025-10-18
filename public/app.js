@@ -142,14 +142,13 @@ class HomeWizardController {
     createDeviceCard(device, plugId) {
         const deviceType = this.getDeviceTypeInfo(device.typeName);
         const icon = this.getDeviceIcon(device.typeName);
-        const isSecondPlug = device.id === 'f0a1f073-1c41-4b5d-adb9-b0f9caad4b8d';
         
         return `
-            <div class="device-card ${isSecondPlug ? 'limited-support' : ''}" data-device-id="${device.id}" data-plug-id="${plugId}">
+            <div class="device-card" data-device-id="${device.id}" data-plug-id="${plugId}">
                 <div class="device-header">
                     <div class="device-info">
-                        <h3>${device.name} ${isSecondPlug ? '⚠️' : ''}</h3>
-                        <div class="device-type">${deviceType.displayName}${isSecondPlug ? ' (Limited Support)' : ''}</div>
+                        <h3>${device.name}</h3>
+                        <div class="device-type">${deviceType.displayName}</div>
                     </div>
                     <div class="device-icon">${icon}</div>
                 </div>
@@ -242,11 +241,6 @@ class HomeWizardController {
                 button.textContent = '...';
             }
 
-            // Special handling for Audio Amplifier TV Controller (second smart plug)
-            if (deviceId === 'f0a1f073-1c41-4b5d-adb9-b0f9caad4b8d') {
-                throw new Error('This device belongs to a different smart plug. API needs multi-plug support.');
-            }
-
             const payload = { type, value };
             
             const response = await fetch(`${this.apiBase}/plug/${deviceId}`, {
@@ -280,7 +274,7 @@ class HomeWizardController {
             // Show error feedback
             if (button) {
                 button.style.background = '#ff4757';
-                button.textContent = deviceId === 'f0a1f073-1c41-4b5d-adb9-b0f9caad4b8d' ? 'N/A' : 'ERROR';
+                button.textContent = 'ERROR';
                 setTimeout(() => {
                     button.disabled = false;
                     button.textContent = button.className.includes('on') ? 'ON' : 

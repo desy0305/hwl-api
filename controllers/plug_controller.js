@@ -7,6 +7,27 @@ const config = require("../config/config");
 
 localStorage = new LocalStorage('./states');
 
+// Device to Smart Plug mapping
+const DEVICE_TO_PLUG_MAP = {
+    // SSB1 devices (b33f109e-41ae-429a-9102-a715a3e8c6bc)
+    "ad621820-e2fb-40d2-9338-3f457e940cd2": "b33f109e-41ae-429a-9102-a715a3e8c6bc", // Controller Coffee
+    "a67d781f-7ebf-47a8-9b9c-011f7f606142": "b33f109e-41ae-429a-9102-a715a3e8c6bc", // Bedroom TV
+    "67320a19-d92b-4f49-b3c7-98ceec7ff61e": "b33f109e-41ae-429a-9102-a715a3e8c6bc", // Desk PC
+    "f16aa0fe-fa30-4dbb-9f46-ca76bc81862b": "b33f109e-41ae-429a-9102-a715a3e8c6bc", // Kitchen
+    "d63a68c6-5ade-4b53-a5fa-efd98aef22c5": "b33f109e-41ae-429a-9102-a715a3e8c6bc", // Bedroom
+    "380fde11-ca05-4f2f-97b2-a9e5c51149f4": "b33f109e-41ae-429a-9102-a715a3e8c6bc", // Battery Charger
+    "682dfb55-c91d-4318-9f14-840779ff7665": "b33f109e-41ae-429a-9102-a715a3e8c6bc", // Dron
+    "4d76e4ec-be86-455b-8915-affd03f919c4": "b33f109e-41ae-429a-9102-a715a3e8c6bc", // Sink Lights
+    
+    // Audio Amplifier TV devices (7675fb88-1477-4513-b946-1bda76a5237b)
+    "f0a1f073-1c41-4b5d-adb9-b0f9caad4b8d": "7675fb88-1477-4513-b946-1bda76a5237b"  // Controller
+};
+
+// Function to get the correct smart plug ID for a device
+function getSmartPlugIdForDevice(deviceId) {
+    return DEVICE_TO_PLUG_MAP[deviceId] || config.smartPlugId; // fallback to default
+}
+
 module.exports = {
     // Return all registered plugs
     getAllPlugs(req, res, next) {
@@ -114,11 +135,14 @@ module.exports = {
                 }
 
                 if(data) {
+                    // Get the correct smart plug ID for this device
+                    const smartPlugId = getSmartPlugIdForDevice(req.params.plugID);
+                    
                     axios({
                         method: "post",
                         url:
                             "https://plug.homewizard.com/plugs/" +
-                            config.smartPlugId +
+                            smartPlugId +
                             "/devices/" +
                             req.params.plugID +
                             "/action",
