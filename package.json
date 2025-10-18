@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "docker:build": "docker build -t hwl-smart-home .",
+    "docker:run": "docker run -p 3033:3033 --env-file .env hwl-smart-home"
   },
   "repository": {
     "type": "git",

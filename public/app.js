@@ -3,6 +3,7 @@ class HomeWizardController {
         this.apiBase = 'http://localhost:3034/api';
         this.devices = [];
         this.deviceStates = new Map();
+        this.activeRequests = new Set(); // Track active requests to prevent duplicates
         this.init();
     }
 
@@ -114,6 +115,51 @@ class HomeWizardController {
             const plugElement = this.createPlugElement(plug);
             container.appendChild(plugElement);
         });
+        
+        // Add event delegation for device controls
+        this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+        const container = document.getElementById('devicesContainer');
+        
+        // Remove any existing listeners to prevent duplicates
+        container.removeEventListener('click', this.handleDeviceControl);
+        container.removeEventListener('change', this.handleDimmerControl);
+        
+        // Add event delegation for buttons
+        container.addEventListener('click', (e) => {
+            if (e.target.classList.contains('control-btn')) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const deviceId = e.target.dataset.deviceId;
+                const action = e.target.dataset.action;
+                const type = e.target.dataset.type;
+                
+                console.log(`[DEBUG] Button clicked: deviceId=${deviceId}, action=${action}, type=${type}`);
+                
+                if (deviceId && action && type) {
+                    this.controlDevice(deviceId, type, action, e.target);
+                }
+            }
+        });
+        
+        // Add event delegation for dimmer sliders
+        container.addEventListener('change', (e) => {
+            if (e.target.type === 'range' && e.target.dataset.deviceId) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const deviceId = e.target.dataset.deviceId;
+                const type = e.target.dataset.type;
+                const value = e.target.value;
+                
+                console.log(`[DEBUG] Dimmer changed: deviceId=${deviceId}, value=${value}`);
+                
+                this.controlDevice(deviceId, type, value, e.target);
+            }
+        });
     }
 
     createPlugElement(plug) {
@@ -167,10 +213,10 @@ class HomeWizardController {
         
         if (deviceType.family === 'Switch' || deviceType.family === 'Bulb') {
             controls.push(`
-                <button class="control-btn on" onclick="controller.controlDevice('${device.id}', 'switch', 'on')">
+                <button class="control-btn on" data-device-id="${device.id}" data-action="on" data-type="switch">
                     ON
                 </button>
-                <button class="control-btn off" onclick="controller.controlDevice('${device.id}', 'switch', 'off')">
+                <button class="control-btn off" data-device-id="${device.id}" data-action="off" data-type="switch">
                     OFF
                 </button>
             `);
@@ -178,15 +224,14 @@ class HomeWizardController {
         
         if (deviceType.family === 'Dimmer') {
             controls.push(`
-                <button class="control-btn on" onclick="controller.controlDevice('${device.id}', 'switch', 'on')">
+                <button class="control-btn on" data-device-id="${device.id}" data-action="on" data-type="switch">
                     ON
                 </button>
-                <button class="control-btn off" onclick="controller.controlDevice('${device.id}', 'switch', 'off')">
+                <button class="control-btn off" data-device-id="${device.id}" data-action="off" data-type="switch">
                     OFF
                 </button>
                 <div class="dimmer-control">
-                    <input type="range" min="1" max="100" value="50" 
-                           onchange="controller.controlDevice('${device.id}', 'dimmer', this.value)">
+                    <input type="range" min="1" max="100" value="50" data-device-id="${device.id}" data-type="dimmer">
                     <div class="dimmer-value">50%</div>
                 </div>
             `);
@@ -197,7 +242,7 @@ class HomeWizardController {
             actions.forEach(action => {
                 const actionName = action.action || action;
                 controls.push(`
-                    <button class="control-btn" onclick="controller.controlDevice('${device.id}', 'brel_ud_curtain', '${actionName.toLowerCase()}')">
+                    <button class="control-btn" data-device-id="${device.id}" data-action="${actionName.toLowerCase()}" data-type="brel_ud_curtain">
                         ${actionName.toUpperCase()}
                     </button>
                 `);
@@ -233,12 +278,26 @@ class HomeWizardController {
         return iconMap[typeName] || '⚡';
     }
 
-    async controlDevice(deviceId, type, value) {
+    async controlDevice(deviceId, type, value, buttonElement = null) {
         try {
-            const button = event?.target;
+            // Debug logging to track what's being called
+            console.log(`[DEBUG] controlDevice called: deviceId=${deviceId}, type=${type}, value=${value}`);
+            console.log(`[DEBUG] Call stack:`, new Error().stack);
+            
+            // Prevent duplicate requests for the same device
+            const requestKey = `${deviceId}-${type}-${value}`;
+            if (this.activeRequests.has(requestKey)) {
+                console.log(`[DEBUG] Duplicate request blocked: ${requestKey}`);
+                return;
+            }
+            this.activeRequests.add(requestKey);
+            
+            // Get button element from parameter or try to find it from event
+            const button = buttonElement || (typeof event !== 'undefined' ? event.target : null);
             if (button) {
                 button.disabled = true;
                 button.textContent = '...';
+                console.log(`[DEBUG] Button disabled: ${button.textContent}`);
             }
 
             const payload = { type, value };
@@ -255,6 +314,13 @@ class HomeWizardController {
             
             const result = await response.json();
             this.updateDeviceStatus(deviceId, result.is_active);
+            
+            // Log analytics
+            if (window.automation) {
+                window.automation.logAnalytics(deviceId, value, 'manual');
+            }
+            
+            console.log(`[DEBUG] Device ${deviceId} controlled successfully: ${result.is_active}`);
             
             // Show success feedback
             if (button) {
@@ -283,6 +349,10 @@ class HomeWizardController {
                     button.style.background = '';
                 }, 2000);
             }
+        } finally {
+            // Always remove the request from active set
+            const requestKey = `${deviceId}-${type}-${value}`;
+            this.activeRequests.delete(requestKey);
         }
     }
 
@@ -328,8 +398,16 @@ class HomeWizardController {
 
 // Initialize the controller when the page loads
 let controller;
+let automation;
+
 document.addEventListener('DOMContentLoaded', () => {
     controller = new HomeWizardController();
+    
+    // Initialize automation after controller is ready
+    setTimeout(() => {
+        automation = new SmartHomeAutomation(controller);
+        window.automation = automation; // Make it globally accessible
+    }, 2000);
 });
 
 // Global function to reload devices

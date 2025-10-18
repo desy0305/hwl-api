@@ -5,16 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HomeWizard Lite Control Panel</title>
     <link rel="stylesheet" href="style.css">
+    
+    <!-- CDN Libraries for Smart Home Features -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.43/moment-timezone-with-data.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 </head>
 <body>
     <div class="container">
         <header>
             <h1>🏠 HomeWizard Lite Control Panel</h1>
-            <div class="status" id="connectionStatus">
-                <span class="status-dot offline"></span>
-                <span>Connecting...</span>
+            <div class="header-info">
+                <div class="status" id="connectionStatus">
+                    <span class="status-dot offline"></span>
+                    <span>Connecting...</span>
+                </div>
+                <div class="location-info" id="locationInfo">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span id="locationText">Sofia, Bulgaria</span>
+                </div>
+                <div class="sun-info" id="sunInfo">
+                    <i class="fas fa-sun"></i>
+                    <span id="sunText">Loading...</span>
+                </div>
+                <div class="time-info" id="timeInfo">
+                    <i class="fas fa-clock"></i>
+                    <span id="currentTime">--:--</span>
+                </div>
             </div>
         </header>
+
+        <nav class="tab-navigation">
+            <button class="tab-btn active" onclick="showTab('devices', this)">
+                <i class="fas fa-plug"></i> Devices
+            </button>
+            <button class="tab-btn" onclick="showTab('automation', this)">
+                <i class="fas fa-robot"></i> Automation
+            </button>
+            <button class="tab-btn" onclick="showTab('schedules', this)">
+                <i class="fas fa-calendar-alt"></i> Schedules
+            </button>
+            <button class="tab-btn" onclick="showTab('analytics', this)">
+                <i class="fas fa-chart-line"></i> Analytics
+            </button>
+        </nav>
 
         <main>
             <div class="loading" id="loading">
@@ -28,12 +64,117 @@
                 <button onclick="loadDevices()">Retry</button>
             </div>
 
-            <div class="devices-container" id="devicesContainer" style="display: none;">
-                <!-- Smart plugs will be dynamically loaded here -->
+            <!-- Devices Tab -->
+            <div class="tab-content active" id="devicesTab">
+                <div class="devices-container" id="devicesContainer" style="display: none;">
+                    <!-- Smart plugs will be dynamically loaded here -->
+                </div>
+            </div>
+
+            <!-- Automation Tab -->
+            <div class="tab-content" id="automationTab">
+                <div class="automation-section">
+                    <h2><i class="fas fa-magic"></i> Smart Automation</h2>
+                    
+                    <div class="automation-cards">
+                        <div class="automation-card">
+                            <h3><i class="fas fa-sun"></i> Sunrise/Sunset Automation</h3>
+                            <div class="sun-times" id="sunTimes">
+                                <div class="sun-time">
+                                    <span class="label">Sunrise:</span>
+                                    <span id="sunriseTime">--:--</span>
+                                </div>
+                                <div class="sun-time">
+                                    <span class="label">Sunset:</span>
+                                    <span id="sunsetTime">--:--</span>
+                                </div>
+                            </div>
+                            <div class="automation-controls">
+                                <button class="automation-btn" onclick="createSunriseRule()">
+                                    <i class="fas fa-plus"></i> Add Sunrise Rule
+                                </button>
+                                <button class="automation-btn" onclick="createSunsetRule()">
+                                    <i class="fas fa-plus"></i> Add Sunset Rule
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="automation-card">
+                            <h3><i class="fas fa-clock"></i> Timer & Schedules</h3>
+                            <div class="timer-controls">
+                                <select id="timerDevice" class="form-control">
+                                    <option value="">Select Device</option>
+                                </select>
+                                <select id="timerAction" class="form-control">
+                                    <option value="on">Turn ON</option>
+                                    <option value="off">Turn OFF</option>
+                                </select>
+                                <input type="time" id="timerTime" class="form-control">
+                                <button class="automation-btn" onclick="createTimer()">
+                                    <i class="fas fa-plus"></i> Add Timer
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="automation-card">
+                            <h3><i class="fas fa-thermometer-half"></i> Weather-Based Rules</h3>
+                            <div class="weather-info" id="weatherInfo">
+                                <div class="weather-item">
+                                    <i class="fas fa-cloud"></i>
+                                    <span id="weatherCondition">Loading...</span>
+                                </div>
+                                <div class="weather-item">
+                                    <i class="fas fa-thermometer-half"></i>
+                                    <span id="temperature">--°C</span>
+                                </div>
+                            </div>
+                            <button class="automation-btn" onclick="createWeatherRule()">
+                                <i class="fas fa-plus"></i> Add Weather Rule
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schedules Tab -->
+            <div class="tab-content" id="schedulesTab">
+                <div class="schedules-section">
+                    <h2><i class="fas fa-calendar-alt"></i> Active Schedules</h2>
+                    <div class="schedules-list" id="schedulesList">
+                        <!-- Active schedules will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div class="tab-content" id="analyticsTab">
+                <div class="analytics-section">
+                    <h2><i class="fas fa-chart-line"></i> Usage Analytics</h2>
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <h3>Device Usage Today</h3>
+                            <canvas id="usageChart" width="400" height="200"></canvas>
+                        </div>
+                        <div class="analytics-card">
+                            <h3>Energy Insights</h3>
+                            <div class="energy-stats" id="energyStats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Most Used Device:</span>
+                                    <span class="stat-value" id="mostUsedDevice">--</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Total Switches Today:</span>
+                                    <span class="stat-value" id="totalSwitches">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
 
     <script src="app.js"></script>
+    <script src="automation.js"></script>
 </body>
 </html>
