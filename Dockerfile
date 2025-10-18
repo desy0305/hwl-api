@@ -12,6 +12,6 @@ RUN npm install
 COPY . .
 
 # !! MAKE SURE THIS IS THE RIGHT PORT YOU WANT TO USE !!
-EXPOSE 3000
+EXPOSE 3033
 
 CMD ["node", "index.js"]

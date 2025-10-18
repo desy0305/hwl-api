@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeWizard Lite Control Panel</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏠 HomeWizard Lite Control Panel</h1>
+            <div class="status" id="connectionStatus">
+                <span class="status-dot offline"></span>
+                <span>Connecting...</span>
+            </div>
+        </header>
+
+        <main>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Loading devices...</p>
+            </div>
+
+            <div class="error-message" id="errorMessage" style="display: none;">
+                <h3>⚠️ Connection Error</h3>
+                <p id="errorText"></p>
+                <button onclick="loadDevices()">Retry</button>
+            </div>
+
+            <div class="devices-container" id="devicesContainer" style="display: none;">
+                <!-- Smart plugs will be dynamically loaded here -->
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

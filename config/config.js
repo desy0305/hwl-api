@@ -1,3 +1,6 @@
+// Load environment variables from .env file
+require('dotenv').config();
+
 // Set debug level for tracer
 const loglevel = process.env.LOGLEVEL || "warn";
 

@@ -22,8 +22,11 @@ app.use(morgan("dev"));
 // Enable CORS-support
 app.use(cors());
 
+// Serve static files from public directory
+app.use(express.static('public'));
+
 app.get('/', function(req, res, next) {
-    res.status(200).send(new ApiResponse("Hello World!", 202));
+    res.sendFile(__dirname + '/public/index.html');
 });
 
 app.use('/api', test_routes);
