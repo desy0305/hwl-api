@@ -1,6 +1,7 @@
 class HomeWizardController {
     constructor() {
-        this.apiBase = 'http://localhost:3034/api';
+        // Use current host and port for network access
+        this.apiBase = `http://${window.location.hostname}:${window.location.port}/api`;
         this.devices = [];
         this.deviceStates = new Map();
         this.activeRequests = new Set(); // Track active requests to prevent duplicates
@@ -15,6 +16,8 @@ class HomeWizardController {
 
     updateConnectionStatus(status) {
         const statusElement = document.getElementById('connectionStatus');
+        if (!statusElement) return;
+        
         const dot = statusElement.querySelector('.status-dot');
         const text = statusElement.querySelector('span:last-child');
         
@@ -123,43 +126,45 @@ class HomeWizardController {
     setupEventListeners() {
         const container = document.getElementById('devicesContainer');
         
-        // Remove any existing listeners to prevent duplicates
-        container.removeEventListener('click', this.handleDeviceControl);
-        container.removeEventListener('change', this.handleDimmerControl);
-        
-        // Add event delegation for buttons
-        container.addEventListener('click', (e) => {
-            if (e.target.classList.contains('control-btn')) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                const deviceId = e.target.dataset.deviceId;
-                const action = e.target.dataset.action;
-                const type = e.target.dataset.type;
-                
-                console.log(`[DEBUG] Button clicked: deviceId=${deviceId}, action=${action}, type=${type}`);
-                
-                if (deviceId && action && type) {
-                    this.controlDevice(deviceId, type, action, e.target);
+        // Only add listeners if they haven't been added yet
+        if (!container.hasAttribute('data-listeners-added')) {
+            // Add event delegation for buttons
+            container.addEventListener('click', (e) => {
+                if (e.target.classList.contains('control-btn')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const deviceId = e.target.dataset.deviceId;
+                    const action = e.target.dataset.action;
+                    const type = e.target.dataset.type;
+                    
+                    console.log(`[DEBUG] Button clicked: deviceId=${deviceId}, action=${action}, type=${type}`);
+                    
+                    if (deviceId && action && type) {
+                        this.controlDevice(deviceId, type, action, e.target);
+                    }
                 }
-            }
-        });
-        
-        // Add event delegation for dimmer sliders
-        container.addEventListener('change', (e) => {
-            if (e.target.type === 'range' && e.target.dataset.deviceId) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                const deviceId = e.target.dataset.deviceId;
-                const type = e.target.dataset.type;
-                const value = e.target.value;
-                
-                console.log(`[DEBUG] Dimmer changed: deviceId=${deviceId}, value=${value}`);
-                
-                this.controlDevice(deviceId, type, value, e.target);
-            }
-        });
+            });
+            
+            // Add event delegation for dimmer sliders
+            container.addEventListener('change', (e) => {
+                if (e.target.type === 'range' && e.target.dataset.deviceId) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const deviceId = e.target.dataset.deviceId;
+                    const type = e.target.dataset.type;
+                    const value = e.target.value;
+                    
+                    console.log(`[DEBUG] Dimmer changed: deviceId=${deviceId}, value=${value}`);
+                    
+                    this.controlDevice(deviceId, type, value, e.target);
+                }
+            });
+            
+            // Mark that listeners have been added
+            container.setAttribute('data-listeners-added', 'true');
+        }
     }
 
     createPlugElement(plug) {
@@ -292,8 +297,8 @@ class HomeWizardController {
             }
             this.activeRequests.add(requestKey);
             
-            // Get button element from parameter or try to find it from event
-            const button = buttonElement || (typeof event !== 'undefined' ? event.target : null);
+            // Get button element from parameter
+            const button = buttonElement;
             if (button) {
                 button.disabled = true;
                 button.textContent = '...';
@@ -416,3 +421,80 @@ function loadDevices() {
         controller.loadDevices();
     }
 }
+// Tab
+ functionality
+function showTab(tabName, buttonElement) {
+    // Hide all tab contents
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabContents.forEach(tab => tab.classList.remove('active'));
+    
+    // Remove active class from all tab buttons
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    tabButtons.forEach(btn => btn.classList.remove('active'));
+    
+    // Show selected tab content
+    const selectedTab = document.getElementById(tabName + 'Tab');
+    if (selectedTab) {
+        selectedTab.classList.add('active');
+    }
+    
+    // Add active class to clicked button
+    if (buttonElement) {
+        buttonElement.classList.add('active');
+    }
+}
+
+// Update time display
+function updateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', { 
+        hour12: false, 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    });
+    const timeElement = document.getElementById('currentTime');
+    if (timeElement) {
+        timeElement.textContent = timeString;
+    }
+}
+
+// Initialize time updates
+setInterval(updateTime, 1000);
+updateTime(); // Initial call
+
+// Initialize sun times (placeholder)
+function updateSunTimes() {
+    const sunriseElement = document.getElementById('sunriseTime');
+    const sunsetElement = document.getElementById('sunsetTime');
+    
+    if (sunriseElement) sunriseElement.textContent = '06:30';
+    if (sunsetElement) sunsetElement.textContent = '18:45';
+}
+
+// Placeholder automation functions
+function createSunriseRule() {
+    alert('Sunrise automation rule creation - Coming soon!');
+}
+
+function createSunsetRule() {
+    alert('Sunset automation rule creation - Coming soon!');
+}
+
+function createTimer() {
+    alert('Timer creation - Coming soon!');
+}
+
+function createWeatherRule() {
+    alert('Weather-based rule creation - Coming soon!');
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    updateSunTimes();
+    
+    // Update connection status element ID to match HTML
+    const statusElement = document.getElementById('connectionStatus');
+    if (statusElement) {
+        // The connection status is now handled by the existing updateConnectionStatus method
+    }
+});

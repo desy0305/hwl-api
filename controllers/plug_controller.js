@@ -226,25 +226,22 @@ module.exports = {
                         }
                     })
                     .then(response => {
-                        response.data.map((smartplug) => {
-
-                            // Check if no smartplugs exist
-                            if (smartplug.length == 0) {
-                                res.status(200).send(new ApiResponse("No smartplugs found", 200));
-                            } else {
-
-                                // Create custom response based on response data
-                                res.status(200).send({
-                                    "id": smartplug.id,
-                                    "name": smartplug.name,
-                                    "online": smartplug.online,
-                                    "latitude": smartplug.latitude,
-                                    "longtitude": smartplug.longtitude,
-                                    "timeZone": smartplug.timeZone,
-                                    "firmwareUpdateAvailable": smartplug.firmwareUpdateAvailable
-                                });
-                            }
-                        })
+                        // Check if no smartplugs exist
+                        if (!response.data || response.data.length === 0) {
+                            res.status(200).send(new ApiResponse("No smartplugs found", 200));
+                        } else {
+                            // Return the first smartplug (or modify to return all if needed)
+                            const smartplug = response.data[0];
+                            res.status(200).send({
+                                "id": smartplug.id,
+                                "name": smartplug.name,
+                                "online": smartplug.online,
+                                "latitude": smartplug.latitude,
+                                "longtitude": smartplug.longtitude,
+                                "timeZone": smartplug.timeZone,
+                                "firmwareUpdateAvailable": smartplug.firmwareUpdateAvailable
+                            });
+                        }
                     })
                     .catch(e => {
                         // Cannot communicate with HWL, returning error
